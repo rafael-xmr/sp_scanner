@@ -37,13 +37,14 @@ final class ParamData extends ffi.Struct {
 typedef GetSecKeyFunc = ffi.Void Function(ffi.Pointer<ParamData>);
 typedef GetSecKey = void Function(ffi.Pointer<ParamData>);
 
-ffi.Pointer<OutputData> createOutputDataStruct(String txid) {
-  final ffi.Pointer<ffi.Uint8> txidPtr = calloc<ffi.Uint8>(txid.length);
-  final txidList = txidPtr.asTypedList(txid.length);
-  txidList.setAll(0, BytesUtils.fromHexString(txid));
+ffi.Pointer<OutputData> createOutputDataStruct(String outputToCheck) {
+  final outputBytes = BytesUtils.fromHexString(outputToCheck);
+  final ffi.Pointer<ffi.Uint8> outputToCheckPtr = calloc<ffi.Uint8>(outputBytes.length);
+  final outputToCheckList = outputToCheckPtr.asTypedList(outputBytes.length);
+  outputToCheckList.setAll(0, outputBytes);
 
   final result = calloc<OutputData>();
-  result.ref.pubkey_bytes = txidPtr;
+  result.ref.pubkey_bytes = outputToCheckPtr;
   return result;
 }
 
@@ -82,18 +83,20 @@ void freeReceiverDataStruct(ffi.Pointer<ReceiverData> receiverDataPtr) {
   calloc.free(receiverDataPtr);
 }
 
-void callGetSecKeys(List<String> txids, List<int> tweakBytes, Receiver receiver) {
-  final dl = ffi.DynamicLibrary.open("rust-silentpayments/target/debug/libsilentpayments.so");
-  final getSecKey = dl.lookupFunction<GetSecKeyFunc, GetSecKey>("get_sec_key");
+void callApiScanOutputs(
+    List<String> outputsToCheck, String tweakDataForRecipient, Receiver receiver) {
+  final dl = ffi.DynamicLibrary.open("libsilentpayments.so");
+  final getSecKey = dl.lookupFunction<GetSecKeyFunc, GetSecKey>("api_scan_outputs");
 
-  final pointers = calloc<ffi.Pointer<OutputData>>(txids.length);
-  for (int i = 0; i < txids.length; i++) {
-    pointers[i] = createOutputDataStruct(txids[i]);
+  final pointers = calloc<ffi.Pointer<OutputData>>(outputsToCheck.length);
+  for (int i = 0; i < outputsToCheck.length; i++) {
+    pointers[i] = createOutputDataStruct(outputsToCheck[i]);
   }
 
   final pointersReceiver = createReceiverDataStruct(
       receiver.bScan, receiver.BSpend, receiver.isTestnet, receiver.labels);
 
+  final tweakBytes = BytesUtils.fromHexString(tweakDataForRecipient);
   final tweakPtr = calloc<ffi.Uint8>(tweakBytes.length);
   final tweakList = tweakPtr.asTypedList(tweakBytes.length);
   tweakList.setAll(0, tweakBytes);
@@ -101,7 +104,7 @@ void callGetSecKeys(List<String> txids, List<int> tweakBytes, Receiver receiver)
   final paramData = calloc<ParamData>();
   paramData.ref
     ..outputs_data = pointers
-    ..outputs_data_len = txids.length
+    ..outputs_data_len = outputsToCheck.length
     ..tweak_bytes = tweakPtr
     ..receiver_data = pointersReceiver;
 
@@ -109,7 +112,7 @@ void callGetSecKeys(List<String> txids, List<int> tweakBytes, Receiver receiver)
   getSecKey(paramData);
 
   // Cleanup
-  for (int i = 0; i < txids.length; i++) {
+  for (int i = 0; i < outputsToCheck.length; i++) {
     freeOutputDataStruct(pointers[i]);
   }
   freeReceiverDataStruct(pointersReceiver);
