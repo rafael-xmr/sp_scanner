@@ -1,4 +1,4 @@
 [submodule "rust-silentpayments"]
 	path = rust-silentpayments
-	url = git@github.com:cake-tech/rust-silentpayments
+	url = https://github.com/cake-tech/rust-silentpayments/
 	branch = dart-ffi
