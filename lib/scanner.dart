@@ -1,5 +1,6 @@
 // ignore_for_file: non_constant_identifier_names
 import 'dart:ffi' as ffi;
+import 'dart:io' as io;
 import 'package:ffi/ffi.dart';
 import 'package:blockchain_utils/blockchain_utils.dart';
 
@@ -83,9 +84,15 @@ void freeReceiverDataStruct(ffi.Pointer<ReceiverData> receiverDataPtr) {
   calloc.free(receiverDataPtr);
 }
 
+const _base = 'libsilentpayments';
+final _dylib = io.Platform.isWindows ? '$_base.dll' : '$_base.so';
+
+final dl = io.Platform.isIOS || io.Platform.isMacOS
+    ? ffi.DynamicLibrary.executable()
+    : ffi.DynamicLibrary.open(_dylib);
+
 void callApiScanOutputs(
     List<String> outputsToCheck, String tweakDataForRecipient, Receiver receiver) {
-  final dl = ffi.DynamicLibrary.open("libsilentpayments.so");
   final getSecKey = dl.lookupFunction<GetSecKeyFunc, GetSecKey>("api_scan_outputs");
 
   final pointers = calloc<ffi.Pointer<OutputData>>(outputsToCheck.length);
