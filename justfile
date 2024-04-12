@@ -1,7 +1,7 @@
-default: execute
+default: run
 
 build:
-    cargo build --manifest-path rust-silentpayments/Cargo.toml
+    cargo build --manifest-path rust/Cargo.toml
 
 gen:
     dart run ffigen

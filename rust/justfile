@@ -1,0 +1,12 @@
+default: build
+
+build-regular:
+    cargo build
+
+build-emulator:
+    cargo ndk -t x86 -o ../android/app/src/main/jniLibs build
+
+build-android:
+    cargo ndk -o ../android/app/src/main/jniLibs build
+
+build: build-regular build-emulator build-android

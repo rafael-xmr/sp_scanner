@@ -32,7 +32,7 @@ ffigen:
   output: 'lib/generated_bindings.dart'
   headers:
     entry-points:
-      - 'rust-silentpayments/target/silentpayments.h'
+      - 'rust/target/sp_scanner.h'
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

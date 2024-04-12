@@ -18,7 +18,7 @@ DynamicLibrary load(name) {
   }
 }
 
-final dl = load('silentpayments');
+final dl = load('sp_scanner');
 final lib = NativeLibrary(dl);
 
 class Receiver {

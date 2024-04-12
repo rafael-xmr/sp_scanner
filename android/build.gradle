@@ -48,7 +48,7 @@ android {
 apply from: "../cargokit/gradle/plugin.gradle"
 
 cargokit {
-    manifestDir = "../rust-silentpayments/"
+    manifestDir = "../rust/"
     libname = "sp_scanner"
 }
 
