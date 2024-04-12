@@ -1,46 +1,38 @@
 // ignore_for_file: non_constant_identifier_names
-import 'dart:ffi' as ffi;
-import 'dart:io' as io;
+import 'dart:ffi';
+import 'dart:io';
 import 'package:ffi/ffi.dart';
+import 'package:sp_scanner/generated_bindings.dart';
 import 'package:blockchain_utils/blockchain_utils.dart';
 
-final class OutputData extends ffi.Struct {
-  external ffi.Pointer<ffi.Uint8> pubkey_bytes;
-  @ffi.Uint64()
-  external int amount;
+DynamicLibrary load(name) {
+  // return DynamicLibrary.open(
+  //     '/home/rafael/Working/sp_scanner/rust-silentpayments/target/debug/libsilentpayments.so');
+  if (Platform.isAndroid || Platform.isLinux) {
+    return DynamicLibrary.open('lib$name.so');
+  } else if (Platform.isIOS || Platform.isMacOS) {
+    return DynamicLibrary.open('$name.framework/$name');
+  } else {
+    // } else if (Platform.isWindows) {
+    return DynamicLibrary.open('$name.dll');
+  }
 }
+
+final lib = NativeLibrary(load('silentpayments'));
 
 class Receiver {
   final String bScan;
   final String BSpend;
   final bool isTestnet;
   final List<int> labels;
+  final int labelsLen;
 
-  Receiver(this.bScan, this.BSpend, this.isTestnet, this.labels);
+  Receiver(this.bScan, this.BSpend, this.isTestnet, this.labels, this.labelsLen);
 }
 
-final class ReceiverData extends ffi.Struct {
-  external ffi.Pointer<ffi.Uint8> b_scan_bytes;
-  external ffi.Pointer<ffi.Uint8> B_spend_bytes;
-  @ffi.Bool()
-  external bool is_testnet;
-  external ffi.Pointer<ffi.Uint32> labels;
-}
-
-final class ParamData extends ffi.Struct {
-  external ffi.Pointer<ffi.Pointer<OutputData>> outputs_data;
-  @ffi.Uint64()
-  external int outputs_data_len;
-  external ffi.Pointer<ffi.Uint8> tweak_bytes;
-  external ffi.Pointer<ReceiverData> receiver_data;
-}
-
-typedef GetSecKeyFunc = ffi.Void Function(ffi.Pointer<ParamData>);
-typedef GetSecKey = void Function(ffi.Pointer<ParamData>);
-
-ffi.Pointer<OutputData> createOutputDataStruct(String outputToCheck) {
+Pointer<OutputData> createOutputDataStruct(String outputToCheck) {
   final outputBytes = BytesUtils.fromHexString(outputToCheck);
-  final ffi.Pointer<ffi.Uint8> outputToCheckPtr = calloc<ffi.Uint8>(outputBytes.length);
+  final Pointer<Uint8> outputToCheckPtr = calloc<Uint8>(outputBytes.length);
   final outputToCheckList = outputToCheckPtr.asTypedList(outputBytes.length);
   outputToCheckList.setAll(0, outputBytes);
 
@@ -49,22 +41,27 @@ ffi.Pointer<OutputData> createOutputDataStruct(String outputToCheck) {
   return result;
 }
 
-void freeOutputDataStruct(ffi.Pointer<OutputData> voutDataPtr) {
+void freeOutputDataStruct(Pointer<OutputData> voutDataPtr) {
   calloc.free(voutDataPtr.ref.pubkey_bytes);
   calloc.free(voutDataPtr);
 }
 
-ffi.Pointer<ReceiverData> createReceiverDataStruct(
-    String bScan, String BSpend, bool isTestnet, List<int> labels) {
-  final ffi.Pointer<ffi.Uint8> bScanPtr = calloc<ffi.Uint8>(bScan.length);
+Pointer<ReceiverData> createReceiverDataStruct(
+  String bScan,
+  String BSpend,
+  bool isTestnet,
+  List<int> labels,
+  int labelsLen,
+) {
+  final Pointer<Uint8> bScanPtr = calloc<Uint8>(bScan.length);
   final bScanList = bScanPtr.asTypedList(bScan.length);
   bScanList.setAll(0, BytesUtils.fromHexString(bScan));
 
-  final ffi.Pointer<ffi.Uint8> bSpendPtr = calloc<ffi.Uint8>(BSpend.length);
+  final Pointer<Uint8> bSpendPtr = calloc<Uint8>(BSpend.length);
   final BSpendList = bSpendPtr.asTypedList(BSpend.length);
   BSpendList.setAll(0, BytesUtils.fromHexString(BSpend));
 
-  final ffi.Pointer<ffi.Uint32> labelsPtr = calloc<ffi.Uint32>(labels.length);
+  final Pointer<Uint32> labelsPtr = calloc<Uint32>(labels.length);
   final labelsList = labelsPtr.asTypedList(labels.length);
   labelsList.setAll(0, labels);
 
@@ -72,39 +69,36 @@ ffi.Pointer<ReceiverData> createReceiverDataStruct(
   result.ref
     ..b_scan_bytes = bScanPtr
     ..B_spend_bytes = bSpendPtr
-    ..is_testnet = isTestnet
-    ..labels = labelsPtr;
+    ..is_testnet = isTestnet ? 1 : 0
+    ..labels = labelsPtr
+    ..labels_len = labelsLen;
   return result;
 }
 
-void freeReceiverDataStruct(ffi.Pointer<ReceiverData> receiverDataPtr) {
+void freeReceiverDataStruct(Pointer<ReceiverData> receiverDataPtr) {
   calloc.free(receiverDataPtr.ref.b_scan_bytes);
   calloc.free(receiverDataPtr.ref.B_spend_bytes);
   calloc.free(receiverDataPtr.ref.labels);
   calloc.free(receiverDataPtr);
 }
 
-const _base = 'libsilentpayments';
-final _dylib = io.Platform.isWindows ? '$_base.dll' : '$_base.so';
-
-final dl = io.Platform.isIOS || io.Platform.isMacOS
-    ? ffi.DynamicLibrary.executable()
-    : ffi.DynamicLibrary.open(_dylib);
-
-void callApiScanOutputs(
+BytesVec callApiScanOutputs(
     List<String> outputsToCheck, String tweakDataForRecipient, Receiver receiver) {
-  final getSecKey = dl.lookupFunction<GetSecKeyFunc, GetSecKey>("api_scan_outputs");
-
-  final pointers = calloc<ffi.Pointer<OutputData>>(outputsToCheck.length);
+  final pointers = calloc<Pointer<OutputData>>(outputsToCheck.length);
   for (int i = 0; i < outputsToCheck.length; i++) {
     pointers[i] = createOutputDataStruct(outputsToCheck[i]);
   }
 
   final pointersReceiver = createReceiverDataStruct(
-      receiver.bScan, receiver.BSpend, receiver.isTestnet, receiver.labels);
+    receiver.bScan,
+    receiver.BSpend,
+    receiver.isTestnet,
+    receiver.labels,
+    receiver.labelsLen,
+  );
 
   final tweakBytes = BytesUtils.fromHexString(tweakDataForRecipient);
-  final tweakPtr = calloc<ffi.Uint8>(tweakBytes.length);
+  final tweakPtr = calloc<Uint8>(tweakBytes.length);
   final tweakList = tweakPtr.asTypedList(tweakBytes.length);
   tweakList.setAll(0, tweakBytes);
 
@@ -116,7 +110,7 @@ void callApiScanOutputs(
     ..receiver_data = pointersReceiver;
 
   // Call the Rust function with ParamData
-  getSecKey(paramData);
+  final result = lib.api_scan_outputs(paramData);
 
   // Cleanup
   for (int i = 0; i < outputsToCheck.length; i++) {
@@ -126,4 +120,22 @@ void callApiScanOutputs(
   calloc.free(pointers);
   calloc.free(tweakPtr);
   calloc.free(paramData);
+
+  return result;
+}
+
+// A function to interpret the BytesVec returned from Rust
+String interpretBytesVec(BytesVec bytesVec) {
+  final byteList = bytesVec.data.asTypedList(bytesVec.len);
+
+  freeBytesVec(bytesVec.data, bytesVec.len);
+
+  return BytesUtils.toHexString(byteList);
+}
+
+typedef FreeFunc = Void Function(Pointer<BytesVec>);
+typedef Free = void Function(Pointer<BytesVec>);
+
+void freeBytesVec(Pointer<Uint8> bytesVecPtr, int len) {
+  lib.free_bytes_vec(bytesVecPtr, len);
 }

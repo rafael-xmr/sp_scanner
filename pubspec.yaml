@@ -9,19 +9,27 @@ environment:
 
 dependencies:
   ffi: ^2.1.0
+  ffigen: ^9.0.1
   flutter:
     sdk: flutter
+  flutter_rust_bridge: ^1.82.6
   plugin_platform_interface: ^2.0.2
-
-dev_dependencies:
-  ffigen: ^6.1.2
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^2.0.0
+  uuid: ^4.2.2
   blockchain_utils:
     path: /home/rafael/Working/blockchain_utils
   bitcoin_base:
     path: /home/rafael/Working/bitcoin_base
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+ffigen:
+  output: 'lib/generated_bindings.dart'
+  headers:
+    entry-points:
+      - 'rust-silentpayments/target/silentpayments.h'
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
