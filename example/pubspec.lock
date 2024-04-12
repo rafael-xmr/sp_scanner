@@ -23,7 +23,7 @@ packages:
       path: "."
       ref: cake-update-v3
       resolved-ref: "3ddad3d1a9b78f49c9ef542962758400315d64a7"
-      url: "https://github.com/cake-tech/bitcoin_base.git"
+      url: "https://github.com/cake-tech/bitcoin_base"
     source: git
     version: "4.0.0"
   blockchain_utils:
