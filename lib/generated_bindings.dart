@@ -1588,7 +1588,7 @@ class NativeLibrary {
   late final _getloadavg =
       _getloadavgPtr.asFunction<int Function(ffi.Pointer<ffi.Double>, int)>();
 
-  BytesVec api_scan_outputs(
+  ffi.Pointer<ffi.Int8> api_scan_outputs(
     ffi.Pointer<ParamData> data,
   ) {
     return _api_scan_outputs(
@@ -1596,28 +1596,26 @@ class NativeLibrary {
     );
   }
 
-  late final _api_scan_outputsPtr =
-      _lookup<ffi.NativeFunction<BytesVec Function(ffi.Pointer<ParamData>)>>(
-          'api_scan_outputs');
+  late final _api_scan_outputsPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ffi.Int8> Function(
+              ffi.Pointer<ParamData>)>>('api_scan_outputs');
   late final _api_scan_outputs = _api_scan_outputsPtr
-      .asFunction<BytesVec Function(ffi.Pointer<ParamData>)>();
+      .asFunction<ffi.Pointer<ffi.Int8> Function(ffi.Pointer<ParamData>)>();
 
-  void free_bytes_vec(
-    ffi.Pointer<ffi.Uint8> bytes_vec,
-    int len,
+  void free_pointer(
+    ffi.Pointer<ffi.Char> ptr,
   ) {
-    return _free_bytes_vec(
-      bytes_vec,
-      len,
+    return _free_pointer(
+      ptr,
     );
   }
 
-  late final _free_bytes_vecPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<ffi.Uint8>, ffi.UintPtr)>>('free_bytes_vec');
-  late final _free_bytes_vec = _free_bytes_vecPtr
-      .asFunction<void Function(ffi.Pointer<ffi.Uint8>, int)>();
+  late final _free_pointerPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
+          'free_pointer');
+  late final _free_pointer =
+      _free_pointerPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
 }
 
 final class __fsid_t extends ffi.Struct {
@@ -1916,13 +1914,6 @@ typedef __uint32_t = ffi.UnsignedInt;
 typedef __compar_fn_t = ffi.Pointer<
     ffi.NativeFunction<
         ffi.Int Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>)>>;
-
-final class BytesVec extends ffi.Struct {
-  external ffi.Pointer<ffi.Uint8> data;
-
-  @ffi.UintPtr()
-  external int len;
-}
 
 final class OutputData extends ffi.Struct {
   external ffi.Pointer<ffi.Uint8> pubkey_bytes;

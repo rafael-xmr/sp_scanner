@@ -3,14 +3,14 @@ import 'package:sp_scanner/sp_scanner.dart';
 
 void main(List<String> arguments) {
   final result = interpretBytesVec(callApiScanOutputs(
-    ["e00a003643cebac9fa0a5569ddd7921023e9d744d61f9aac540f3a3ebcb6eb6c"],
-    ECPublic.fromHex("03820ba28923a3d4ecf7ae5ad6de8b737bd0a9b34c7dcf1efe846bb73c88737e8e").toHex(),
+    ["545ff3ecec27fbf43790d639a7a71ea0ff72a3dcce11aea17aeb63eca4188379"],
+    ECPublic.fromHex("03a952f2ec5ea0a8bd7d5022c499ab7947058e3dd471434775b08f10d5d4fd1ab9").toHex(),
     Receiver(
-      "a757e2cb0b1e7376062ce0a618166c83adbe6ac00abcba9b9e3197dd71d29a01",
-      "03dab9fb8d205198b11616a24c598c9488063c8048e55fc4ebedc8a0f86125aa2d",
-      true,
-      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      10,
+      "f402c47811fa7ff8d7f879de7be8d2f1b7cc411c0542535731fb43095b90a3b6",
+      "022fdc3f6726e23bfce017ab731c09e13d97cde4613bba309e5f2c507798764bca",
+      false,
+      [1],
+      1,
     ),
   ));
   print('Result: $result');

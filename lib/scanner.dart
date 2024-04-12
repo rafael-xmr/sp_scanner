@@ -1,4 +1,5 @@
 // ignore_for_file: non_constant_identifier_names
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 import 'package:ffi/ffi.dart';
@@ -6,19 +7,19 @@ import 'package:sp_scanner/generated_bindings.dart';
 import 'package:blockchain_utils/blockchain_utils.dart';
 
 DynamicLibrary load(name) {
-  // return DynamicLibrary.open(
-  //     '/home/rafael/Working/sp_scanner/rust-silentpayments/target/debug/libsilentpayments.so');
   if (Platform.isAndroid || Platform.isLinux) {
     return DynamicLibrary.open('lib$name.so');
   } else if (Platform.isIOS || Platform.isMacOS) {
     return DynamicLibrary.open('$name.framework/$name');
-  } else {
-    // } else if (Platform.isWindows) {
+  } else if (Platform.isWindows) {
     return DynamicLibrary.open('$name.dll');
+  } else {
+    return DynamicLibrary.process();
   }
 }
 
-final lib = NativeLibrary(load('silentpayments'));
+final dl = load('silentpayments');
+final lib = NativeLibrary(dl);
 
 class Receiver {
   final String bScan;
@@ -82,7 +83,7 @@ void freeReceiverDataStruct(Pointer<ReceiverData> receiverDataPtr) {
   calloc.free(receiverDataPtr);
 }
 
-BytesVec callApiScanOutputs(
+Pointer<Int8> callApiScanOutputs(
     List<String> outputsToCheck, String tweakDataForRecipient, Receiver receiver) {
   final pointers = calloc<Pointer<OutputData>>(outputsToCheck.length);
   for (int i = 0; i < outputsToCheck.length; i++) {
@@ -124,18 +125,25 @@ BytesVec callApiScanOutputs(
   return result;
 }
 
-// A function to interpret the BytesVec returned from Rust
-String interpretBytesVec(BytesVec bytesVec) {
-  final byteList = bytesVec.data.asTypedList(bytesVec.len);
+typedef FreePointerFunc = Int8 Function(Pointer<Int8>);
+typedef FreePointer = int Function(Pointer<Int8>);
 
-  freeBytesVec(bytesVec.data, bytesVec.len);
+final freePointer = dl.lookupFunction<FreePointerFunc, FreePointer>('free_pointer');
 
-  return BytesUtils.toHexString(byteList);
+Map<String, dynamic> interpretBytesVec(Pointer<Int8> pointer) {
+  final jsonString = pointer.cast<Utf8>().toDartString();
+
+  final result = jsonDecode(jsonString) as Map<String, dynamic>;
+
+  freePointer(pointer);
+
+  return result;
 }
 
-typedef FreeFunc = Void Function(Pointer<BytesVec>);
-typedef Free = void Function(Pointer<BytesVec>);
-
-void freeBytesVec(Pointer<Uint8> bytesVecPtr, int len) {
-  lib.free_bytes_vec(bytesVecPtr, len);
+Map<String, dynamic> scanOutputs(
+  List<String> outputsToCheck,
+  String tweakDataForRecipient,
+  Receiver receiver,
+) {
+  return interpretBytesVec(callApiScanOutputs(outputsToCheck, tweakDataForRecipient, receiver));
 }
