@@ -4,7 +4,7 @@ import 'dart:ffi';
 import 'dart:io';
 import 'package:ffi/ffi.dart';
 import 'package:sp_scanner/generated_bindings.dart';
-import 'package:blockchain_utils/blockchain_utils.dart';
+import 'package:blockchain_utils/blockchain_utils.dart' show BytesUtils;
 
 DynamicLibrary load(name) {
   if (Platform.isAndroid || Platform.isLinux) {
