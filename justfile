@@ -4,7 +4,7 @@ build:
     cargo build --manifest-path rust/Cargo.toml
 
 gen:
-    dart run ffigen
+    dart run ffigen --config ffigen.yaml
 
 execute: build gen
 

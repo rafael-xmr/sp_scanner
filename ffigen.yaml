@@ -17,3 +17,8 @@ preamble: |
 comments:
   style: any
   length: full
+compiler-opts:
+  - '-I/usr/lib/clang/18/include'
+  - '-I/usr/lib/llvm/18/include/'
+  - '-I/usr/include'
+  - '-I/usr/local/include'

@@ -9,7 +9,7 @@ environment:
 
 dependencies:
   ffi: ^2.1.0
-  ffigen: ^8.0.1
+  ffigen: ^12.0.0
   flutter:
     sdk: flutter
   plugin_platform_interface: ^2.0.2
